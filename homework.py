@@ -44,22 +44,21 @@ class Training:
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
+        NotImplementedError
 
     def show_training_info(self) -> InfoMessage:
         """Вернуть информационное сообщение о выполненной тренировке."""
-        info_message = InfoMessage(self.__class__.__name__,
-                                   self.duration,
-                                   self.get_distance(),
-                                   self.get_mean_speed(),
-                                   self.get_spent_calories())
-        return info_message
+        return InfoMessage(self.__class__.__name__,
+                           self.duration,
+                           self.get_distance(),
+                           self.get_mean_speed(),
+                           self.get_spent_calories())
 
 
 class Running(Training):
     """Тренировка: бег."""
     CMSM: int = 18   # CALORIES_MEAN_SPEED_MULTIPLIER: CMSM
     CMSS: float = 1.79  # CALORIES_MEAN_SPEED_SHIFT: CMSS
-    TYPE: str = 'RUN'
 
     def get_spent_calories(self) -> float:
         calories_1 = self.CMSM * self.get_mean_speed() + self.CMSS
@@ -73,7 +72,6 @@ class SportsWalking(Training):
     COEFF_1: float = 0.035  # коэффициент для расчета скорости ходьбы
     COEFF_2: int = 2  # коэффициент для расчета шагов на метр при ходьбе
     COEFF_3: float = 0.029  # коэффициент для расчета скорости бега
-    TYPE: str = 'WLK'  # тип активности (ходьба)
     KMH_IN_MSEC: float = 0.278  # коэффициент перевода км/ч в м/с
     CM_IN_M: int = 100  # коэффициент перевода сантиметров в метры
 
@@ -104,7 +102,6 @@ class Swimming(Training):
     """Тренировка: плавание."""
     LEN_STEP: float = 1.38  # LEN_STEP : Длина гребка
     COEFF_SWIM_1: float = 1.1  # коэффициент для расчета скорости плавания
-    TYPE: str = 'SWM'  # тип активности (плавание)
     COEFF_SWIM_2: int = 2  # коэф расчета количества движений рук и ног на метр
 
     def __init__(self,
@@ -128,14 +125,15 @@ class Swimming(Training):
         return calories
 
 
-def read_package(workout_type: str, data: list[int]) -> Training:
+def read_package(workout_type: str, data: list[float]) -> Training:
     """Прочитать данные полученные от датчиков."""
-    training_dict: dict[type(str, Training)] = {'SWM': Swimming,
+    training_dict: dict[str, type(Training)] = {'SWM': Swimming,
                                                 'RUN': Running,
                                                 'WLK': SportsWalking}
-    if workout_type not in training_dict:
+    training_class = training_dict.get(workout_type)
+    if not training_class:
         raise ValueError(f"Unknown workout type: {workout_type}")
-    return training_dict[workout_type](*data)
+    return training_class(*data)
 
 
 def main(training: Training) -> None:
